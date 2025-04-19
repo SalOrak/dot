@@ -1,0 +1,11 @@
+* Dot `.`
+Linking `dot`files throughout the system rewritten in Rust.
+
+TODO:
+- [X] Read a file
+- [X] Read line by line
+- [X] Store each line 
+- [X] Parse each line into a packed object (struct)
+- [ ] Make sure paths exists 
+  
+
