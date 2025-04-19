@@ -1,22 +1,8 @@
-| Name         | Filepath                   | Destination                      | Operation |
-|--------------+----------------------------+----------------------------------+-----------|
-| Bash         | files/bashrc               | .bashrc                          | symfile   |
-| Bash Alias   | files/bash_aliases         | .bash_aliases                    | symfile   |
-| Bash Profile | files/bash_profile         | .bash_profile                    | symfile   |
-| Whaler Bash  | bin/whaler.sh              | .local/bin/whaler.sh             | symfile   |
-| NixMe        | bin/nixme.sh               | .local/bin/nixme                 | symfile   |
-| Latex        | files/latexmkrc            | .config/latexmk/latexmkrc        | symfile   |
-| Alacritty    | files/alacritty.toml       | .config/alacritty/alacritty.toml | symfile   |
-| tmux         | files/tmux.conf            | .config/tmux/tmux.conf           | symfile   |
-| Neovim       | files/nvim_lazy/           | .config/nvim/                    | symdir    |
-| Emacs        | files/emacs                | .config/emacs/                   | symdir    |
-| i3           | files/i3/config            | .config/i3/config                | symfile   |
-| i3status     | files/i3status/config      | .config/i3status/config          | symfile   |
-| gitmessage   | files/git/gitmessage       | .gitmessage                      | symfile   |
-| gitconfig    | files/git/gitconfig        | .gitconfig                       | symfile   |
-| Rofi         | files/rofi/config.rasi     | .config/rofi/config.rasi         | symfile   |
-| Rofi themes  | files/rofi/themes          | .config/rofi/themes              | symdir    |
-| Polybar      | files/polybar              | .config/polybar/                 | symdir    |
-| Picom        | files/picom/picom.conf     | .config/picom/picom.conf         | symfile   |
-| Dunst        | files/dunst/dunstrc        | .config/dunst/dunstrc            | symfile   |
-| Ripgrep      | files/ripgrep/ripgrep.conf | .config/ripgrep/ripgrep.conf     | symfile   |
+| Name        | Filepath    | Destination     | Operation |
+|-------------+-------------+-----------------+-----------|
+| Source      | src/main.rs | test/main.rs    | symfile   |
+| Target      | target      | test/target     | symdir    |
+| TargetSlash | target/     | test/tslash     | symdir    |
+| Dest        | target/     | test/dest/      | symdir    |
+| DestSlash   | target/     | test/destslash/ | symdir    |
+| DestSlash   | target/     | /               | symdir    |

@@ -4,6 +4,12 @@ use std::fmt;
 
 use dirs::home_dir;
 
+#[cfg(target_os = "linux")]
+use std::os::unix::fs::symlink as symlink;
+
+#[cfg(target_os = "windows")]
+use std::os::windows::fs::symlink as symlink;
+
 
 #[derive(Debug)]
 enum Op {
@@ -54,7 +60,6 @@ impl fmt::Display for Dot {
             self.dest,
             self.operation,
         )
-        
     }
 }
 
@@ -85,6 +90,8 @@ impl Dots {
                 let skip_headers = if self.headers { 2 } else { 0 };
                 for (num,line) in file_contents.lines().skip(skip_headers).enumerate() {
                     let values = line.split("|").collect::<Vec<_>>();
+                    if values.len() < 5 {continue};
+
                     let dot = Dot::new(
                         num,       // Line number
                         values[1], // Name
@@ -110,7 +117,7 @@ impl Dots {
             message)
     }
 
-    fn verify_dotfiles(&self) {
+    fn verify_dotfiles(&self) -> Result<(), String> {
         let errors: Vec<Result<(), String>> = self.dots.iter()
             .map(|dot|{
                 let mut err_str = String::from("");
@@ -159,12 +166,22 @@ impl Dots {
                 if !has_errors { Ok(()) } else {Err(err_str)}
 
             }).collect::<Vec<_>>();
+        
+        let mut has_errors = false;
         for d in errors {
             if let Err(err) = d {
+                has_errors = true;
                 eprintln!("ERROR: {}", err)
             }
         };
-       
+        
+        if has_errors { Err("Dotfiles contains errors.".to_string())} else {Ok(())}
+    }
+
+    fn execute(&self) {
+        self.dots.iter().for_each(|dot| {
+            let _ = dot.execute();
+        })
     }
 }
 
@@ -176,8 +193,11 @@ impl Dot {
         let op = op.trim().to_string();
 
         let dest = match Path::new(dest.as_str()).is_absolute() {
-            true => dest,
+            true => {
+                Dot::strip_dir(dest)
+            },
             false => {
+                let dest = Dot::strip_dir(dest);
                 format!("{}/{}", home_dir().unwrap().display(), dest)
             }
         };
@@ -196,18 +216,48 @@ impl Dot {
             operation,
         } 
     }
+
+    fn execute(&self) -> Result<(), String> {
+        // If the directory does not exist,
+        let source_path = Path::new(&self.source).canonicalize().unwrap();
+        let dest_path = Path::new(&self.dest);
+        // Don't care about errors.
+        // I just want the dirs to be created
+        let _ = fs::create_dir_all(dest_path.parent().unwrap());
+        match symlink(source_path, dest_path) {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                let err_msg = format!("Error {} while symlinking {} to {} ({:?})",
+                                      err, &self.source, &self.dest,
+                                      self.operation);
+                eprintln!("{}", Dots::format_error(&"".to_string(), self.line, &self.name, &err_msg));
+                Err("Error while symlinking".to_string())
+            },
+        }
+
+    }
+
+    fn strip_dir(dir: String) -> String {
+        let dir = if let Some(d) = &dir.strip_suffix("/"){
+            if dir.len() > 1 {d.to_string()} else {dir}
+        } else {dir};
+        dir
+    }
 }
 
 fn main() {
     let filename = "DOTS";
 
-
-    let _ = std::env::set_current_dir(Path::new("/home/hector/personal/dotfiles")).is_ok(); // TODO: Delete
+    // let _ = std::env::set_current_dir(Path::new("/home/hector/personal/dotfiles")).is_ok(); // TODO: Delete
 
     let mut dots: Dots = Dots::new(true, "org").unwrap();
 
     dots.parse_file(filename).unwrap();
-    dots.verify_dotfiles();
-    
+    if let Err(error) = dots.verify_dotfiles() {
+        eprintln!("{}", error);
+        return;
+    }
+
+    dots.execute();
 }
 
