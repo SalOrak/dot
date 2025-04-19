@@ -5,4 +5,3 @@
 | TargetSlash | target/     | test/tslash     | symdir    |
 | Dest        | target/     | test/dest/      | symdir    |
 | DestSlash   | target/     | test/destslash/ | symdir    |
-| DestSlash   | target/     | /               | symdir    |
