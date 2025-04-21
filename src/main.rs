@@ -1,6 +1,9 @@
 use clap::{Parser};
+use dirs::home_dir;
+use std::env::current_dir;
 
 mod dotfiles;
+mod simplegit;
 
 #[derive(Parser)]
 #[command(version)]
@@ -25,6 +28,24 @@ struct Cli {
         help="Indicates whether the dots file includes headers or not.",
     )]
     headers: bool,
+    
+    #[arg(
+        required=false,
+        short= None,
+        long = "source-prefix",
+        default_value_t = {format!("{}",current_dir().unwrap().display())},
+        help="Specify the prefix path for source",
+    )]
+    source_prefix: String,
+    
+    #[arg(
+        required=false,
+        short= None,
+        long = "dest-prefix",
+        default_value_t = {format!("{}",home_dir().unwrap().display())},
+        help="Specify the prefix path for destination",
+    )]
+    destination_prefix: String,
 
     #[arg(
         required=false,
@@ -44,17 +65,25 @@ struct Cli {
         help="Specify the dots declaration file.",
     )]
     filename: String,
+    
+    #[arg(
+        required=false,
+        short='u',
+        long = "url",
+        default_value = "",
+        help="Specify the github url.",
+    )]
+    url: String,
 }
 
 fn main() {
 
     let cli = Cli::parse();
 
-    println!("Force       = {}", cli.force);
-    println!("Headers     = {}", cli.headers);
-    println!("File Format = {}", cli.file_format);
-    println!("Filename    = {}", cli.filename);
-
+    if !cli.url.is_empty() {
+        simplegit::clone_repo(cli.url.clone());
+    }
+            
     let flags: dotfiles::Flags = dotfiles::Flags::build(
         cli.file_format,
         cli.headers,

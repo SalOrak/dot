@@ -41,7 +41,7 @@ struct Dot {
     operation: Op
 }
 
-#[derive (Debug)]
+#[allow(dead_code)]
 pub struct Flags {
     headers: bool,
     force: bool,
@@ -59,7 +59,6 @@ impl Flags {
     }
 }
 
-#[derive(Debug)]
 pub struct Dots {
     filename: String,
     flags: Flags,
@@ -239,19 +238,25 @@ impl Dot {
         let _ = fs::create_dir_all(dest_path.parent().unwrap());
         if flags.force && dest_path.exists() {
             if let Ok(meta) = dest_path.metadata() {
-                assert!(dest_path.exists(), "IMPOSSIBLE: Dest path exists here");
-                if meta.is_dir() {
+                assert!(dest_path.exists(), "IMPOSSIBLE: Dest path exists here");                if meta.is_dir() {
                     fs::remove_dir_all(dest_path).unwrap();
                 } else if meta.is_file() || meta.is_symlink() {
-                      fs::remove_file(dest_path).unwrap();
+                    fs::remove_file(dest_path).unwrap();
                 }else {
-                    eprintln!("WTF is this file");
+                    panic!("WTF is this file {}", dest_path.display());
                 }
             }
             
         }
         match symlink(source_path, dest_path) {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                println!("[LOG] Source {} to dest {}",
+                    &self.source,
+                    &self.dest,
+                );
+                Ok(())
+            }
+,
             Err(err) => {
                 let err_msg = format!("Error {} while symlinking {} to {} ({:?})",
                     err, &self.source, &self.dest,

@@ -1,11 +1,16 @@
-* Dot `.`
+* Dot ~.~
 Linking `dot`files throughout the system rewritten in Rust.
 
-TODO:
-- [X] Read a file
-- [X] Read line by line
-- [X] Store each line 
-- [X] Parse each line into a packed object (struct)
-- [ ] Make sure paths exists 
+ TODO:
+- [ ] Backup files and directories when ~--force~ is active.
+- [ ] Able to easily revert backup files / directories.
+- [ ] Allow user to specify backup directory
+- [ ] Allow user to defin source dotfiles directory: ~-source-prefix~
+- [ ] Allow user to define destination prefix directory: ~-destination-prefix~
+- [ ] Dotfiles as github directory
+- [ ] Support CSV format
+  
+
+
   
 
