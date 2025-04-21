@@ -81,20 +81,24 @@ fn main() {
     let cli = Cli::parse();
 
     if !cli.url.is_empty() {
-        simplegit::clone_repo(cli.url.clone());
+        simplegit::clone_repo(cli.url.as_str());
     }
             
     let flags: dotfiles::Flags = dotfiles::Flags::build(
-        cli.file_format,
+        cli.file_format.as_str(),
         cli.headers,
         cli.force,
     );
     
-    let mut dots: dotfiles::Dots = dotfiles::Dots::build(flags).unwrap();
+    let mut dots: dotfiles::Dots = dotfiles::Dots::build(flags);
     
-    dots.parse_file(cli.filename.as_str()).unwrap();
+    match dots.parse_file(cli.filename.as_str()) {
+        Ok(()) => (),
+        Err(err) => panic!("{err}"),
+    };
+    
     if let Err(error) = dots.verify_dotfiles() {
-        eprintln!("{}", error);
+        eprintln!("{error}");
         return;
     }
 
