@@ -1,6 +1,7 @@
 use clap::{Parser};
 use dirs::home_dir;
 use std::env::current_dir;
+use std::process::exit;
 
 mod dotfiles;
 mod simplegit;
@@ -10,13 +11,12 @@ mod simplegit;
 #[command(about)]
 #[command(long_about)]
 struct Cli {
-
     #[arg(
         required=false,
         short='f',
         long = "force",
         default_value_t = false,
-        help="Overrides files and directories. Default false",
+        help="Overrides files and directories.",
     )]
     force: bool,
 
@@ -61,7 +61,7 @@ struct Cli {
         required=false,
         short='d',
         long = "dots",
-        default_value = "./DOTS",
+        default_value = "DOTS",
         help="Specify the dots declaration file.",
     )]
     filename: String,
@@ -71,10 +71,12 @@ struct Cli {
         short='u',
         long = "url",
         default_value = "",
-        help="Specify the github url.",
+        help="[EXPERIMENTAL].Specify the github url.",
     )]
     url: String,
+
 }
+
 
 fn main() {
 
@@ -83,23 +85,30 @@ fn main() {
     if !cli.url.is_empty() {
         simplegit::clone_repo(cli.url.as_str());
     }
+
+    println!("[DEBUG]: Force status: {}", cli.force);
             
     let flags: dotfiles::Flags = dotfiles::Flags::build(
         cli.file_format.as_str(),
         cli.headers,
         cli.force,
+        cli.source_prefix,
+        cli.destination_prefix,
     );
     
     let mut dots: dotfiles::Dots = dotfiles::Dots::build(flags);
     
     match dots.parse_file(cli.filename.as_str()) {
         Ok(()) => (),
-        Err(err) => panic!("{err}"),
+        Err(err) => {
+            eprintln!("{err}");
+            exit(1);
+        },
     };
     
     if let Err(error) = dots.verify_dotfiles() {
         eprintln!("{error}");
-        return;
+        exit(1);
     }
 
     dots.execute();

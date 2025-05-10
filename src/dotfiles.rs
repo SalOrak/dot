@@ -2,8 +2,6 @@ use std::fmt;
 use std::fs;
 use std::path::Path;
 
-use dirs::home_dir;
-
 #[cfg(target_os = "linux")]
 use std::os::unix::fs::symlink;
 
@@ -46,15 +44,22 @@ pub struct Flags {
     file_format: FormatFile,
     headers: bool,
     force: bool,
+    source_prefix: String,
+    destination_prefix: String,
 }
 
 impl Flags {
-    pub fn build(file_format: &str, headers: bool, force: bool) -> Self {
+    pub fn build(file_format: &str, headers: bool,
+        force: bool,
+        source_prefix: String,
+        destination_prefix:String, ) -> Self {
         let file_format = FormatFile::parse(file_format).unwrap();
         Self {
             file_format,
             headers,
             force,
+            source_prefix: strip_dir(source_prefix),
+            destination_prefix: strip_dir(destination_prefix),
         }
     }
 }
@@ -95,7 +100,13 @@ impl Dots {
     }
 
     pub fn parse_file(&mut self, filename: &str) -> Result<(), String> {
-        let filepath = Path::new(filename).canonicalize().unwrap();
+
+        
+        let filepath = match Path::new(filename).canonicalize() {
+            Ok(path) => path,
+            Err(_) => return Err(format!("File {filename} does not exist."))
+        };
+        
         let file_contents = fs::read_to_string(filepath)
             .unwrap_or_else(|_| panic!("File {filename} does not exist"));
         match self.flags.file_format {
@@ -106,12 +117,15 @@ impl Dots {
                     if values.len() < 5 {
                         continue;
                     };
+                    
+                    let source = format!("{}/{}", self.flags.source_prefix, values[2].trim());
+                    let dest = format!("{}/{}", self.flags.destination_prefix, values[3].trim());
 
                     let dot = Dot::new(
                         num,       // Line number
                         values[1], // Name
-                        values[2], // Source
-                        values[3], // Dest
+                        source.as_str(),
+                        dest.as_str(),
                         values[4], // Operation
                     );
                     self.dotfiles.push(dot);
@@ -135,8 +149,8 @@ impl Dots {
             .map(|dot|{
                 let mut err_str = String::new();
                 let mut has_errors = false;
-                let source_path = Path::new(&*(dot.source));
-                let dest_path = Path::new(&*(dot.dest));
+                let source_path = Path::new(dot.source.as_str());
+                let dest_path = Path::new(dot.dest.as_str());
                 let line = dot.line + {if self.flags.headers {2 + 1} else {1}} ;
                 // Source path
                 match dot.operation {
@@ -209,18 +223,12 @@ impl Dot {
         let dest = dest.trim().to_string();
         let op = op.trim().to_string();
 
-        let dest = if Path::new(dest.as_str()).is_absolute() {
-            Dot::strip_dir(dest)
-        }
-        else {
-            let dest = Dot::strip_dir(dest);
-            format!("{}/{}", home_dir().unwrap().display(), dest)
-        };
-        
+        let dest = strip_dir(dest);
 
         let operation = match op.to_lowercase().as_str() {
             "symfile" => Op::Symfile,
             "symdir" => Op::Symdir,
+            "ignore" => Op::Ignore,
             _ => Op::Invalid,
         };
 
@@ -234,12 +242,13 @@ impl Dot {
     }
 
     fn execute(&self, flags: &Flags) -> Result<(), String> {
-        // If the directory does not exist,
-        let source_path = Path::new(&self.source).canonicalize().unwrap();
+        let source_path = Path::new(&self.source);
         let dest_path = Path::new(&self.dest);
-        // Don't care about errors.
-        // I just want the dirs to be created
         let _ = fs::create_dir_all(dest_path.parent().unwrap());
+        
+        println!("[DEBUG]: Destination path before executing is {}", dest_path.display());
+        println!("[DEBUG]: Destination path exists? {}", dest_path.exists());
+
         if flags.force && dest_path.exists() {
             if let Ok(meta) = dest_path.metadata() {
                 assert!(dest_path.exists(), "IMPOSSIBLE: Dest path exists here");
@@ -248,7 +257,7 @@ impl Dot {
                 } else if meta.is_file() || meta.is_symlink() {
                     fs::remove_file(dest_path).unwrap();
                 } else {
-                    panic!("WTF is this file {}", dest_path.display());
+                    panic!("Unreachable statement. Path can only be either a file or directory (or symlink):  {}", dest_path.display());
                 }
             }
         }
@@ -272,16 +281,17 @@ impl Dot {
         }
     }
 
-    fn strip_dir(dir: String) -> String {
-        let dir = if let Some(d) = &dir.strip_suffix("/") {
-            if dir.len() > 1 {
-                (*d).to_string()
-            } else {
-                dir
-            }
+
+}
+fn strip_dir(dir: String) -> String {
+    let dir = if let Some(d) = &dir.strip_suffix("/") {
+        if dir.len() > 1 {
+            (*d).to_string()
         } else {
             dir
-        };
+        }
+    } else {
         dir
-    }
+    };
+    dir
 }
