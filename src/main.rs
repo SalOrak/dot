@@ -4,7 +4,7 @@ use std::env::current_dir;
 use std::process::exit;
 
 mod dotfiles;
-mod simplegit;
+// mod simplegit;
 
 #[derive(Parser)]
 #[command(version)]
@@ -82,9 +82,9 @@ fn main() {
 
     let cli = Cli::parse();
 
-    if !cli.url.is_empty() {
-        simplegit::clone_repo(cli.url.as_str());
-    }
+    // if !cli.url.is_empty() {
+    //    simplegit::clone_repo(cli.url.as_str());
+    // }
 
     println!("[DEBUG]: Force status: {}", cli.force);
             
