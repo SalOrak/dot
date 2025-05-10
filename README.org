@@ -5,8 +5,8 @@ Linking `dot`files throughout the system rewritten in Rust.
 - [ ] Backup files and directories when ~--force~ is active.
 - [ ] Able to easily revert backup files / directories.
 - [ ] Allow user to specify backup directory
-- [ ] Allow user to defin source dotfiles directory: ~-source-prefix~
-- [ ] Allow user to define destination prefix directory: ~-destination-prefix~
+- [X] Allow user to defin source dotfiles directory: ~-source-prefix~
+- [X] Allow user to define destination prefix directory: ~-destination-prefix~
 - [ ] Dotfiles as github directory
 - [ ] Support CSV format
   
