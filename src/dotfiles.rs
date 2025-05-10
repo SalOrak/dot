@@ -13,6 +13,7 @@ use std::os::windows::fs::symlink;
 enum Op {
     Symfile,
     Symdir,
+    Ignore,
     Invalid,
 }
 
@@ -155,6 +156,9 @@ impl Dots {
                                 Dots::format_error(&self.filename, line, &dot.name, &error_msg).as_str()
                             );
                         }
+                    },
+                    Op::Ignore => {
+                        // Just ignore
                     },
                     Op::Invalid => {
                         has_errors = true;
